@@ -14,6 +14,7 @@ apt-get install -y -q nginx php8.2-fpm php8.2-pgsql php8.2-mbstring
 
 echo "==> [2/6] Creando directorios..."
 mkdir -p "$WEB_ROOT/uploads"
+mkdir -p "$WEB_ROOT/assets"
 
 echo "==> [3/6] Copiando archivos del proyecto..."
 # Copiar todo excepto install.sh y .gitkeep
@@ -110,8 +111,9 @@ echo "==> [6/6] Ajustando permisos y reiniciando servicios..."
 chown -R www-data:www-data "$WEB_ROOT"
 chmod 755 "$WEB_ROOT"
 chmod 775 "$WEB_ROOT/uploads"
-# uploads/ debe ser escribible por www-data pero no listeable
 chmod o-r "$WEB_ROOT/uploads"
+# assets/ solo lectura (la foto se copia manualmente, no se sube via web)
+chmod 755 "$WEB_ROOT/assets"
 
 # Validar configuraciones antes de recargar
 nginx -t
@@ -128,7 +130,10 @@ echo " Blog disponible en: http://172.16.90.145/"
 echo " Panel admin:        http://172.16.90.145/login.php"
 echo ""
 echo " PENDIENTE:"
-echo "   1. Editá /var/www/blog/config.php con tus datos personales."
-echo "   2. Generá tu hash de password (ver README o instrucciones)."
+echo "   1. Generá tu hash de password:"
+echo "      php -r \"echo password_hash('TU_PASS', PASSWORD_BCRYPT) . PHP_EOL;\""
+echo "      y pegalo en ADMIN_HASH dentro de /var/www/blog/config.php"
+echo "   2. Copiá tu foto de perfil: cp /tmp/perfil.jpg /var/www/blog/assets/perfil.jpg"
+echo "      y ajustá permisos: chown www-data:www-data /var/www/blog/assets/perfil.jpg"
 echo "   3. Colocá tu informe.pdf en /var/www/blog/informe.pdf"
 echo "============================================"

@@ -40,9 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login – Admin</title>
     <link rel="stylesheet" href="/style.css">
 </head>
-<body>
+<body class="login-page">
 
-<main class="login-wrap">
+<div class="login-wrap">
     <h2>Acceso al panel</h2>
 
     <?php if ($error !== ''): ?>
@@ -62,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button type="submit">Ingresar</button>
     </form>
 
-    <p><a href="/">← Volver al blog</a></p>
-</main>
+    <a class="back-link" href="/">&#8592; Volver al blog</a>
+</div>
 
 </body>
 </html>
