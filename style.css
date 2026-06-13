@@ -468,8 +468,24 @@ button[type="submit"]:hover {
 button[type="submit"]:active { transform: none; }
 
 /* ============================================================
+   MURO PÚBLICO – formulario de carga
+   ============================================================ */
+.public-form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    margin-bottom: 2.5rem;
+}
+
+/* ============================================================
    MENSAJES
    ============================================================ */
+.msg-ok,
+.msg-error {
+    margin-bottom: 1rem;
+}
+
 .msg-ok {
     background: rgba(20, 184, 166, .12);
     color: #5eead4;

@@ -1,7 +1,54 @@
 <?php
+session_start();
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/csrf.php';
 
+// ── POST: recibir nuevo post (PRG) ────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+
+    $titulo    = trim($_POST['titulo']    ?? '');
+    $contenido = trim($_POST['contenido'] ?? '');
+    $errores   = [];
+
+    if ($titulo === '') {
+        $errores[] = 'El título es obligatorio.';
+    } elseif (mb_strlen($titulo, 'UTF-8') > 200) {
+        $errores[] = 'El título no puede superar los 200 caracteres.';
+    }
+
+    if ($contenido === '') {
+        $errores[] = 'El contenido es obligatorio.';
+    } elseif (mb_strlen($contenido, 'UTF-8') > 5000) {
+        $errores[] = 'El contenido no puede superar los 5000 caracteres.';
+    }
+
+    if (empty($errores)) {
+        $pdo  = get_pdo();
+        $stmt = $pdo->prepare(
+            'INSERT INTO posts (titulo, contenido, fecha) VALUES (:titulo, :contenido, NOW())'
+        );
+        $stmt->execute([':titulo' => $titulo, ':contenido' => $contenido]);
+        $_SESSION['flash_ok'] = true;
+    } else {
+        $_SESSION['flash_errores']   = $errores;
+        $_SESSION['flash_titulo']    = $titulo;
+        $_SESSION['flash_contenido'] = $contenido;
+    }
+    header('Location: /');
+    exit;
+}
+
+// ── GET: recuperar flash ──────────────────────────────────────────────────────
+$flash_ok       = (bool)($_SESSION['flash_ok']      ?? false);
+$errores        = $_SESSION['flash_errores']         ?? [];
+$form_titulo    = $_SESSION['flash_titulo']          ?? '';
+$form_contenido = $_SESSION['flash_contenido']       ?? '';
+unset($_SESSION['flash_ok'], $_SESSION['flash_errores'],
+      $_SESSION['flash_titulo'], $_SESSION['flash_contenido']);
+
+// ── Datos ─────────────────────────────────────────────────────────────────────
 $pdo  = get_pdo();
 $stmt = $pdo->prepare('SELECT id, titulo, contenido, fecha FROM posts ORDER BY fecha DESC');
 $stmt->execute();
@@ -25,7 +72,7 @@ function fecha_es(string $fecha): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars(NOMBRE, ENT_QUOTES, 'UTF-8') ?> – Blog</title>
+    <title><?= htmlspecialchars(NOMBRE, ENT_QUOTES, 'UTF-8') ?> – Muro</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -67,15 +114,44 @@ function fecha_es(string $fecha): string {
             </svg>
             Ver Informe PDF
         </a>
-        <a href="/login.php">Panel Admin</a>
     </nav>
 </header>
 
 <main>
-    <h2 class="section-title">Posts</h2>
+    <h2 class="section-title">Publicar en el muro</h2>
+
+    <div class="public-form-card">
+        <?php if ($flash_ok): ?>
+            <div class="msg-ok" role="status">¡Post publicado correctamente!</div>
+        <?php endif; ?>
+
+        <?php if (!empty($errores)): ?>
+            <div class="msg-error" role="alert">
+                <?php foreach ($errores as $e): ?>
+                    <p><?= htmlspecialchars($e, ENT_QUOTES, 'UTF-8') ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="post" action="/">
+            <?= csrf_field() ?>
+            <label>
+                Título
+                <input type="text" name="titulo" maxlength="200" required
+                       value="<?= htmlspecialchars($form_titulo, ENT_QUOTES, 'UTF-8') ?>">
+            </label>
+            <label>
+                Contenido
+                <textarea name="contenido" rows="5" maxlength="5000" required><?= htmlspecialchars($form_contenido, ENT_QUOTES, 'UTF-8') ?></textarea>
+            </label>
+            <button type="submit">Publicar</button>
+        </form>
+    </div>
+
+    <h2 class="section-title">El muro</h2>
 
     <?php if (empty($posts)): ?>
-        <p class="empty">No hay posts publicados todavía.</p>
+        <p class="empty">No hay posts todavía. ¡Sé el primero en publicar!</p>
     <?php else: ?>
         <div class="posts-grid">
             <?php foreach ($posts as $post): ?>
@@ -99,8 +175,6 @@ function fecha_es(string $fecha): string {
         <a href="mailto:<?= htmlspecialchars(EMAIL, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(EMAIL, ENT_QUOTES, 'UTF-8') ?></a>
         &nbsp;&middot;&nbsp;
         <a href="/informe.pdf" target="_blank">Informe PDF</a>
-        &nbsp;&middot;&nbsp;
-        <a href="/login.php">Admin</a>
     </p>
 </footer>
 
