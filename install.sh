@@ -21,7 +21,7 @@ echo "==> [3/6] Copiando archivos del proyecto..."
 rsync -a --exclude='install.sh' --exclude='.gitkeep' \
       "$SCRIPT_DIR/" "$WEB_ROOT/"
 
-# Aseguramos que uploads/ quede vacía de .gitkeep si se copió
+# Asegura que uploads/ quede vacía de .gitkeep si se copió
 rm -f "$WEB_ROOT/uploads/.gitkeep"
 
 echo "==> [4/6] Configurando nginx..."
@@ -38,7 +38,7 @@ server {
     index index.php;
 
     # -----------------------------------------------------------------
-    # Bloquear ejecución de PHP en uploads/ (seguridad crítica)
+    # Bloquear ejecución de PHP en uploads/ 
     # Se evalúa ANTES del bloque genérico de PHP gracias al orden regex.
     # -----------------------------------------------------------------
     location ~ ^/uploads/.*\.php$ {
@@ -112,7 +112,7 @@ chown -R www-data:www-data "$WEB_ROOT"
 chmod 755 "$WEB_ROOT"
 chmod 775 "$WEB_ROOT/uploads"
 chmod o-r "$WEB_ROOT/uploads"
-# assets/ solo lectura (la foto se copia manualmente, no se sube via web)
+
 chmod 755 "$WEB_ROOT/assets"
 
 # Validar configuraciones antes de recargar
@@ -122,14 +122,3 @@ php8.2-fpm --test 2>&1 | grep -E "(OK|FAILED)"
 systemctl enable nginx php8.2-fpm
 systemctl restart php8.2-fpm
 systemctl restart nginx
-
-echo ""
-echo "============================================"
-echo " Instalación completada."
-echo " Blog disponible en: http://172.16.90.145/"
-echo ""
-echo " PENDIENTE:"
-echo "   1. Copiá tu foto de perfil: cp /tmp/perfil.jpg /var/www/blog/assets/perfil.jpg"
-echo "      y ajustá permisos: chown www-data:www-data /var/www/blog/assets/perfil.jpg"
-echo "   2. Colocá tu informe.pdf en /var/www/blog/informe.pdf"
-echo "============================================"
